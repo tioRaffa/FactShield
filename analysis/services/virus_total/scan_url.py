@@ -27,6 +27,9 @@ def scan_url(url):
             raise APIException(f"Erro na API: {error_messages}")
 
         url_id = data.get("data", {}).get("id")
+        if not url_id:
+            raise ValidationError("ID da url não encontrado")
+
         return url_id
 
     except requests.exceptions.HTTPError as e:
