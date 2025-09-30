@@ -1,11 +1,11 @@
-import pprint
 import time
+from pprint import pprint
 
 import requests
 from decouple import config
 from rest_framework.exceptions import APIException, ValidationError
 
-from .scan_url import _scan_url
+from analysis.services.virus_total.scan_url import _scan_url
 
 
 def get_report(analysis_id):
@@ -25,7 +25,31 @@ def get_report(analysis_id):
             error_message = data.get("error", {}).get("message", "erro desconhecido")
             raise APIException(f"Erro na API: {error_message}")
 
-        return data
+        attributes = data.get("data", {}).get("attributes", {})
+        if not attributes:
+            raise ValidationError("Attributes não encontrados!")
+
+        stats = attributes.get("stats", {})
+        malicious_count = stats.get("malicious", 0)
+        suspicious_count = stats.get("suspicious", 0)
+        total_scans = (
+            stats.get("harmless", 0)
+            + malicious_count
+            + suspicious_count
+            + stats.get("undetected", 0)
+        )
+
+        url_scanned = data.get("meta", {}).get("url_info", {}).get("url", "N/A")
+        status = attributes.get("status", "N/A")
+
+        report = {
+            "url_scanned": url_scanned,
+            "malicious_count": malicious_count,
+            "suspicious_count": suspicious_count,
+            "total_scans": total_scans,
+            "status": status,
+        }
+        return report
 
     except requests.exceptions.HTTPError as e:
         raise APIException(f"Erro na API: {e}")
@@ -45,4 +69,4 @@ if __name__ == "__main__":
 
     final_report = get_report(url_id)
     print("\n--- Relatório Final ---")
-    pprint(final_report)
+    print(final_report)

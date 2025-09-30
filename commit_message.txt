@@ -1,0 +1,12 @@
+feat: Melhora o relatório de análise de URL do VirusTotal
+
+O relatório da análise de URL do VirusTotal foi aprimorado para fornecer uma estrutura de dados mais clara e concisa.
+
+- A função `get_report` agora processa a resposta da API e retorna um dicionário com as seguintes chaves:
+  - `url_scanned`: A URL que foi analisada.
+  - `malicious_count`: A contagem de varreduras maliciosas.
+  - `suspicious_count`: A contagem de varreduras suspeitas.
+  - `total_scans`: O número total de varreduras.
+  - `status`: O status da análise.
+- O import de `_scan_url` foi ajustado para ser mais explícito.
+- O bloco de teste `if __name__ == '__main__'` foi atualizado para refletir o novo formato do relatório.
