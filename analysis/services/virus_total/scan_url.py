@@ -5,7 +5,7 @@ from decouple import config
 from rest_framework.exceptions import APIException, ValidationError
 
 
-def scan_url(url):
+def _scan_url(url):
     api_key = config("KEY_VIRUS_TOTAL")
     if not api_key:
         raise APIException("Chave API KEY não encontrada no .env!")
@@ -39,5 +39,5 @@ def scan_url(url):
 
 
 if __name__ == "__main__":
-    x = scan_url("https://github.com/tioRaffa/FactShield")
+    x = _scan_url("https://github.com/tioRaffa/FactShield")
     pprint(x)

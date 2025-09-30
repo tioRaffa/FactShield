@@ -5,15 +5,15 @@ import requests
 from decouple import config
 from rest_framework.exceptions import APIException, ValidationError
 
-from .scan_url import scan_url
+from .scan_url import _scan_url
 
 
-def get_report(url_id):
+def get_report(analysis_id):
     api_key = config("KEY_VIRUS_TOTAL")
     if not api_key:
         raise APIException("Chave API KEY não encontrada no .env!")
 
-    url = f"https://www.virustotal.com/api/v3/analyses/{url_id}"
+    url = f"https://www.virustotal.com/api/v3/analyses/{analysis_id}"
 
     headers = {"accept": "application/json", "x-apikey": api_key}
 
@@ -34,10 +34,10 @@ def get_report(url_id):
 
 
 if __name__ == "__main__":
-    url_to_scan = "https://github.com/tioRaffa/FactShield"
+    url_to_scan = "https://youglish.com/"
     print(f"Submetendo URL: {url_to_scan}")
 
-    url_id = scan_url(url_to_scan)
+    url_id = _scan_url(url_to_scan)
     print(f"ID de Análise obtido: {url_id}")
 
     print("Aguardando 15 segundos antes de buscar o relatório...")
