@@ -1,4 +1,5 @@
 from pprint import pprint
+from urllib.parse import urlparse
 
 import requests
 from decouple import config
@@ -6,6 +7,13 @@ from rest_framework.exceptions import APIException, ValidationError
 
 
 def _scan_url(url):
+    if not url:
+        raise ValidationError("URL não pode ser vazia.")
+
+    parsed_url = urlparse(url)
+    if not all([parsed_url.scheme, parsed_url.netloc]) or parsed_url.scheme not in ['http', 'https']:
+        raise ValidationError("URL inválida. A URL deve começar com 'http://' ou 'https://'.")
+
     api_key = config("KEY_VIRUS_TOTAL")
     if not api_key:
         raise APIException("Chave API KEY não encontrada no .env!")
