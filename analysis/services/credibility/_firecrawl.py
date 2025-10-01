@@ -1,11 +1,12 @@
-import sys
 import os
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')))
+import sys
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../../..")))
 from pprint import pprint
 
 from decouple import config
 from firecrawl import FirecrawlApp
-from rest_framework.exceptions import APIException, ValidationError
+from rest_framework.exceptions import APIException
 
 from analysis.util.clean import clean_content
 
@@ -19,21 +20,23 @@ def extract_content_firecrawl(url):
 
     try:
         doc = client.scrape(url, formats=["markdown"], only_main_content=True)
+        if doc:
+            raw_content = doc.markdown
+            cleaned_content = clean_content(raw_content)
 
-        raw_content = doc.markdown
-        cleaned_content = clean_content(raw_content)
+            data = {
+                "title": getattr(doc.metadata, "title", ""),
+                "description": getattr(doc.metadata, "description", ""),
+                "content": cleaned_content,
+                "url": getattr(doc.metadata, "url", ""),
+            }
 
-        data = {
-            "title": doc.metadata.title,
-            "description": doc.metadata.description,
-            "content": cleaned_content,
-            "url": doc.metadata.url,
-        }
+            return data
+        else:
+            raise APIException('"Não foi possível obter dados da URL."')
 
-        return data
-
-    except APIException:
-        return
+    except Exception as e:
+        return APIException(f"Erro ao acessar Firecrawl: {e}")
 
 
 if __name__ == "__main__":
