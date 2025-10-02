@@ -41,9 +41,11 @@ def search_fact_check(query):
             "fact_check_url": first_review.get("url", ""),
             "claim_text": first_claim.get("text", ""),
             "claim_date": first_claim.get("claimDate", ""),
-            "calimant": first_claim.get("claimant", ""),
+            "claimant": first_claim.get("claimant", ""),
         }
 
+    except APIException as e:
+        raise e
     except requests.exceptions.HTTPError as e:
         raise APIException(f"Erro na API: {e}")
     except requests.exceptions.RequestException as e:

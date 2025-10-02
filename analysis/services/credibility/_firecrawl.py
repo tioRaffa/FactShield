@@ -38,11 +38,16 @@ def extract_content_firecrawl(url):
 
         return data
 
+    except APIException as e:
+        raise e
     except Exception as e:
         raise APIException(f"Erro ao acessar Firecrawl: {e}")
 
 
 if __name__ == "__main__":
     url = "https://g1.globo.com/pr/parana/concursos-e-emprego/noticia/2025/10/01/concurso-adapar-concurso-parana.ghtml"
-    data = extract_content_firecrawl(url)
+    url2 = "https://brasileirotrabalhador.com.br/novo-salario-minimo-deixa-brasileiros-pulando-de-alegria/"
+    data = extract_content_firecrawl(url2)
+    title = data.get("title", "")
     pprint(data)
+    print(title)

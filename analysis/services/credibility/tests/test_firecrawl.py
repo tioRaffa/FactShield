@@ -1,3 +1,4 @@
+"""Testes para a função extract_content_firecrawl."""
 
 import os
 import sys
@@ -7,21 +8,17 @@ import pytest
 from decouple import UndefinedValueError
 from rest_framework.exceptions import APIException
 
-# Add project root to path to allow absolute imports
+# Adiciona o diretório raiz do projeto ao path para permitir importações absolutas
 sys.path.insert(
     0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../.."))
 )
 from analysis.services.credibility._firecrawl import extract_content_firecrawl
-from analysis.util.clean import clean_content
 
 
-# Green Path Tests
 @patch("analysis.services.credibility._firecrawl.FirecrawlApp")
 @patch("analysis.services.credibility._firecrawl.config")
 def test_extract_content_firecrawl_success(mock_config, mock_firecrawl_app):
-    """
-    Tests successful content extraction (happy path).
-    """
+    """Testa a extração de conteúdo bem-sucedida (caminho feliz)."""
     # Arrange
     mock_config.return_value = "fake_api_key"
     mock_scrape_result = Mock()
@@ -31,7 +28,6 @@ def test_extract_content_firecrawl_success(mock_config, mock_firecrawl_app):
         "description": "Test Description",
         "url": "http://example.com",
     }
-    # Convert dict to object for attribute access
     mock_scrape_result.metadata = Mock(**mock_scrape_result.metadata)
 
     mock_firecrawl_instance = mock_firecrawl_app.return_value
@@ -53,19 +49,15 @@ def test_extract_content_firecrawl_success(mock_config, mock_firecrawl_app):
 @patch("analysis.services.credibility._firecrawl.FirecrawlApp")
 @patch("analysis.services.credibility._firecrawl.config")
 def test_extract_content_firecrawl_missing_metadata(mock_config, mock_firecrawl_app):
-    """
-    Tests graceful handling of missing metadata attributes.
-    """
+    """Testa o tratamento de atributos de metadados ausentes."""
     # Arrange
     mock_config.return_value = "fake_api_key"
     mock_scrape_result = Mock()
     mock_scrape_result.markdown = "Some content"
-    mock_scrape_result.metadata = {"title": "Only Title"}  # Missing description and url
+    mock_scrape_result.metadata = {"title": "Only Title"}
     mock_scrape_result.metadata = Mock(**mock_scrape_result.metadata)
-    # Make sure accessing missing attributes returns None or default
     mock_scrape_result.metadata.description = None
     mock_scrape_result.metadata.url = None
-
 
     mock_firecrawl_instance = mock_firecrawl_app.return_value
     mock_firecrawl_instance.scrape.return_value = mock_scrape_result
@@ -75,16 +67,13 @@ def test_extract_content_firecrawl_missing_metadata(mock_config, mock_firecrawl_
 
     # Assert
     assert result["title"] == "Only Title"
-    assert result["description"] == ""  # Should default to empty string
-    assert result["url"] == ""      # Should default to empty string
+    assert result["description"] == ""
+    assert result["url"] == ""
 
 
-# Red Path Tests
 @patch("analysis.services.credibility._firecrawl.config")
 def test_extract_content_firecrawl_no_api_key(mock_config):
-    """
-    Tests that an APIException is raised if the API key is not found.
-    """
+    """Testa se uma APIException é levantada se a chave da API não for encontrada."""
     # Arrange
     mock_config.side_effect = UndefinedValueError()
 
@@ -96,21 +85,19 @@ def test_extract_content_firecrawl_no_api_key(mock_config):
 
 @patch("analysis.services.credibility._firecrawl.FirecrawlApp")
 @patch("analysis.services.credibility._firecrawl.config")
-def test_extract_content_firecrawl_scrape_returns_none(mock_config, mock_firecrawl_app):
-    """
-    Tests that an APIException is returned if the scrape call returns None.
-    """
+def test_extract_content_firecrawl_scrape_returns_none(
+    mock_config, mock_firecrawl_app
+):
+    """Testa se uma APIException é retornada se a chamada de scrape retornar None."""
     # Arrange
     mock_config.return_value = "fake_api_key"
     mock_firecrawl_instance = mock_firecrawl_app.return_value
     mock_firecrawl_instance.scrape.return_value = None
 
-    # Act
-    result = extract_content_firecrawl("http://example.com")
-
-    # Assert
-    assert isinstance(result, APIException)
-    assert "Não foi possível obter dados da URL." in str(result.detail)
+    # Act & Assert
+    with pytest.raises(APIException) as excinfo:
+        extract_content_firecrawl("http://example.com")
+    assert "Não foi possível obter dados da URL." in str(excinfo.value)
 
 
 @patch("analysis.services.credibility._firecrawl.FirecrawlApp")
@@ -118,18 +105,13 @@ def test_extract_content_firecrawl_scrape_returns_none(mock_config, mock_firecra
 def test_extract_content_firecrawl_scrape_raises_exception(
     mock_config, mock_firecrawl_app
 ):
-    """
-    Tests that an exception during scraping is caught and returned as an APIException.
-    This also serves as a security test.
-    """
+    """Testa se uma exceção durante o scraping é capturada e retornada como uma APIException."""
     # Arrange
     mock_config.return_value = "fake_api_key"
     mock_firecrawl_instance = mock_firecrawl_app.return_value
     mock_firecrawl_instance.scrape.side_effect = Exception("External service failed")
 
-    # Act
-    result = extract_content_firecrawl("http://example.com")
-
-    # Assert
-    assert isinstance(result, APIException)
-    assert "Erro ao acessar Firecrawl: External service failed" in str(result.detail)
+    # Act & Assert
+    with pytest.raises(APIException) as excinfo:
+        extract_content_firecrawl("http://example.com")
+    assert "Erro ao acessar Firecrawl: External service failed" in str(excinfo.value)
