@@ -8,7 +8,6 @@ from rest_framework.exceptions import APIException
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../../..")))
 from pprint import pprint
 
-
 from analysis.util.clean import clean_content
 
 
@@ -24,23 +23,23 @@ def extract_content_firecrawl(url):
 
     try:
         doc = client.scrape(url, formats=["markdown"], only_main_content=True)
-        if doc:
-            raw_content = doc.markdown
-            cleaned_content = clean_content(raw_content)
+        if not doc:
+            raise APIException('"Não foi possível obter dados da URL."')
 
-            data = {
-                "title": getattr(doc.metadata, "title", "") or "",
-                "description": getattr(doc.metadata, "description", "") or "",
-                "content": cleaned_content,
-                "url": getattr(doc.metadata, "url", "") or "",
-            }
+        raw_content = doc.markdown
+        cleaned_content = clean_content(raw_content)
 
-            return data
-        else:
-            return APIException('"Não foi possível obter dados da URL."')
+        data = {
+            "title": getattr(doc.metadata, "title", "") or "",
+            "description": getattr(doc.metadata, "description", "") or "",
+            "content": cleaned_content,
+            "url": getattr(doc.metadata, "url", "") or "",
+        }
+
+        return data
 
     except Exception as e:
-        return APIException(f"Erro ao acessar Firecrawl: {e}")
+        raise APIException(f"Erro ao acessar Firecrawl: {e}")
 
 
 if __name__ == "__main__":
