@@ -1,3 +1,5 @@
+from pprint import pprint
+
 import requests
 from decouple import UndefinedValueError, config
 from rest_framework.exceptions import APIException
@@ -16,7 +18,7 @@ def search_fact_check(query):
     params = {"key": api_key, "query": query, "languageCode": "pt-BR", "pageSize": 5}
 
     try:
-        response = requests.post(url=url_google, params=params)
+        response = requests.get(url=url_google, params=params)
         data = response.json()
         if response.status_code != 200:
             error_message = data.get("error", {}).get(
@@ -24,7 +26,23 @@ def search_fact_check(query):
             )
             raise APIException(f"Erro na API: {error_message}")
 
-        return data
+        claims = data.get("claims", [])
+        if not claims:
+            return {}
+
+        first_claim = claims[0]
+        first_review = first_claim.get("claimReview", [{}])[0]
+        publisher = first_review.get("publisher", {})
+
+        return {
+            "fact_check_status": "Human Vefiried",
+            "veredict": first_review.get("textualRating", "N/A"),
+            "fact_checker": publisher.get("name", "Desconhecido"),
+            "fact_check_url": first_review.get("url", ""),
+            "claim_text": first_claim.get("text", ""),
+            "claim_date": first_claim.get("claimDate", ""),
+            "calimant": first_claim.get("claimant", ""),
+        }
 
     except requests.exceptions.HTTPError as e:
         raise APIException(f"Erro na API: {e}")
@@ -32,3 +50,16 @@ def search_fact_check(query):
         raise APIException(f"Erro na requisição da API: {e}")
     except Exception as e:
         raise APIException(f"Erro inesperado: {e}")
+
+
+if __name__ == "__main__":
+    query = "Vacinas causam autismo"
+
+    try:
+        results = search_fact_check(query=query)
+        if results:
+            pprint(results)
+        else:
+            print("nada encontrado. chamar a IA para dar veredito final")
+    except APIException as e:
+        print(f"{e}")
