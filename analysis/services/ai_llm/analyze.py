@@ -62,10 +62,25 @@ def analyze_with_llm(raw_content):
             print(f"Alerta: Falha no parsing do JSON. Retorno do LLM:\n{json_string}")
             raise APIException(f"Erro ao analisar o JSON do LLM: {e}")
 
-        return llm_data
+        recommendation = llm_data.get("recommendation", "").upper()
+        if "EVITE" in recommendation:
+            llm_status = "ALTO RISCO"
+        if "CAUTELA" in recommendation:
+            llm_status = "RISCO MODERADO"
+        else:
+            llm_status = "BAIXO RISCO"
 
-    except:  # noqa: E722
-        return
+        return {
+            "llm_status": llm_status,
+            "llm_summary": llm_data.get("summary", "N/A") or "",
+            "llm_risk_assessment": llm_data.get("risk_assessment", "N/A") or "",
+            "llm_recommendation": llm_data.get("recommendation", "N/A") or "",
+        }
+
+    except APIError as e:
+        raise APIException(f"Erro na API da LLM: {e}")
+    except Exception as e:
+        raise APIException(f"Erro inesperado na LLM: {e}")
 
 
 if __name__ == "__main__":
@@ -75,4 +90,4 @@ if __name__ == "__main__":
     data = extract_content_firecrawl(url)
 
     result = analyze_with_llm(data.get("content"))
-    print(result)
+    pprint(result)
