@@ -8,11 +8,14 @@ sys.path.append(
         os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     )
 )
+import logging
 
 from decouple import UndefinedValueError, config
 from google import genai
 from google.genai.errors import APIError
 from rest_framework.exceptions import APIException
+
+logger = logging.getLogger(__name__)
 
 
 def analyze_with_llm(raw_content):
@@ -21,7 +24,9 @@ def analyze_with_llm(raw_content):
     except UndefinedValueError:
         raise APIException("Chave GEMINI_API não encontrada no arquivo .env!")
 
-    if not raw_content or len(raw_content) < 100:
+    safe_raw_content = raw_content.strip() if raw_content else None
+
+    if not safe_raw_content or len(safe_raw_content) < 100:
         return {
             "llm_full_analysis": "Conteudo insuficiente para analise.",
             "llm_status": "CAUTELA",
@@ -33,7 +38,7 @@ def analyze_with_llm(raw_content):
         "Sua análise deve ser objetiva e focada na detecção de risco. "
         "Sua resposta final deve ser estritamente formatada em JSON, seguindo as chaves: 'summary', 'risk_assessment', e 'recommendation'."
     )
-    safe_content = raw_content[:8000]
+    safe_content = safe_raw_content[:8000]
 
     user_prompt = (
         f"Analise o seguinte conteúdo bruto de um artigo:\n\n---\n{safe_content}\n---\n\n"
@@ -59,10 +64,13 @@ def analyze_with_llm(raw_content):
         try:
             llm_data = json.loads(json_string)
         except json.JSONDecodeError as e:
-            print(f"Alerta: Falha no parsing do JSON. Retorno do LLM:\n{json_string}")
+            logger.warning(
+                f"Alerta: Falha no parsing do JSON. Retorno do LLM:\n{json_string}",
+                exc_info=True,
+            )
             raise APIException(f"Erro ao analisar o JSON do LLM: {e}")
 
-        recommendation = llm_data.get("recommendation", "").upper()
+        recommendation = (llm_data.get("recommendation") or "").upper()
         if "EVITE" in recommendation:
             llm_status = "ALTO RISCO"
         elif "CAUTELA" in recommendation:
@@ -72,9 +80,9 @@ def analyze_with_llm(raw_content):
 
         return {
             "llm_status": llm_status,
-            "llm_summary": llm_data.get("summary", "N/A") or "",
-            "llm_risk_assessment": llm_data.get("risk_assessment", "N/A") or "",
-            "llm_recommendation": llm_data.get("recommendation", "N/A") or "",
+            "llm_summary": llm_data.get("summary") or "N/A",
+            "llm_risk_assessment": llm_data.get("risk_assessment") or "N/A",
+            "llm_recommendation": llm_data.get("recommendation") or "N/A",
         }
 
     except APIError as e:
