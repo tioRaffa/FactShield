@@ -1,4 +1,13 @@
+import json
+import os
+import sys
 from pprint import pprint
+
+sys.path.append(
+    os.path.dirname(
+        os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    )
+)
 
 from decouple import UndefinedValueError, config
 from google import genai
@@ -34,3 +43,36 @@ def analyze_with_llm(raw_content):
         "3. **recommendation**: Uma recomendação final, sendo uma das três opções: 'CONFIE NO CONTEÚDO', 'PROSSIGA COM CAUTELA', ou 'EVITE ESTE SITE E CONTEÚDO'.\n"
         "\nNão inclua nenhum texto fora do objeto JSON."
     )
+
+    try:
+        client = genai.Client(api_key=api_key)
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=user_prompt,
+            config={
+                "system_instruction": system_prompt,
+                "response_mime_type": "application/json",
+            },
+        )
+        json_string = response.text.strip()
+
+        try:
+            llm_data = json.loads(json_string)
+        except json.JSONDecodeError as e:
+            print(f"Alerta: Falha no parsing do JSON. Retorno do LLM:\n{json_string}")
+            raise APIException(f"Erro ao analisar o JSON do LLM: {e}")
+
+        return llm_data
+
+    except:  # noqa: E722
+        return
+
+
+if __name__ == "__main__":
+    from analysis.services.credibility._firecrawl import extract_content_firecrawl
+
+    url = "https://g1.globo.com/pr/parana/concursos-e-emprego/noticia/2025/10/01/concurso-adapar-concurso-parana.ghtml"
+    data = extract_content_firecrawl(url)
+
+    result = analyze_with_llm(data.get("content"))
+    print(result)
