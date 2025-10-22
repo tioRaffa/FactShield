@@ -65,7 +65,7 @@ def analyze_with_llm(raw_content):
         recommendation = llm_data.get("recommendation", "").upper()
         if "EVITE" in recommendation:
             llm_status = "ALTO RISCO"
-        if "CAUTELA" in recommendation:
+        elif "CAUTELA" in recommendation:
             llm_status = "RISCO MODERADO"
         else:
             llm_status = "BAIXO RISCO"
