@@ -2,7 +2,7 @@ import concurrent.futures
 import os
 import sys
 import time
-from socket import timeout
+from pprint import pprint
 
 from rest_framework.exceptions import APIException
 
@@ -65,4 +65,4 @@ if __name__ == "__main__":
     url = "https://g1.globo.com/pr/parana/concursos-e-emprego/noticia/2025/10/01/concurso-adapar-concurso-parana.ghtml"
 
     teste = run_full_analysis_synchronous(url=url)
-    print(teste)
+    pprint(teste)
