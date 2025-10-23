@@ -1,8 +1,14 @@
 import concurrent.futures
+import os
+import sys
 import time
+from socket import timeout
 
 from rest_framework.exceptions import APIException
 
+sys.path.append(
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+)
 from analysis.services import (
     analyze_with_llm,
     extract_content_firecrawl,
@@ -22,10 +28,41 @@ def run_full_analysis_synchronous(url):
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
         # A - Virus Total
-        future_vt = executor.submit()
+        # future_vt = executor.submit()
 
         # B - Google Fact Check
         future_fact_check = executor.submit(search_fact_check, title)
 
         # C - LLM Gemini
         future_llm = executor.submit(analyze_with_llm, content)
+
+        # vt_result = future_vt.result(timeout=60)
+        fact_check_result = future_fact_check.result(timeout=20)
+        llm_result = future_llm.result(timeout=120)
+
+    end_time = time.time()
+
+    if fact_check_result:
+        final_verdict_source = "HUMANO (Fact-Check)"
+        final_veredict = fact_check_result.get("veredict", "N/A")
+    else:
+        final_verdict_source = "INTELIGÊNCIA ARTIFICIAL (LLM)"
+        final_veredict = llm_result.get("llm_recommendation", "INCONCLUSIVO")
+
+    return {
+        "analysis_time_seconds": round(end_time - start_time, 2),
+        "url": url,
+        "final_verdict_source": final_verdict_source,
+        "final_veredict": final_veredict,
+        # "virustotal_report": vt_result,
+        "fact_check_report": fact_check_result,
+        "llm_analysis": llm_result,
+        "firecrawl_data": firecrawl_data,
+    }
+
+
+if __name__ == "__main__":
+    url = "https://g1.globo.com/pr/parana/concursos-e-emprego/noticia/2025/10/01/concurso-adapar-concurso-parana.ghtml"
+
+    teste = run_full_analysis_synchronous(url=url)
+    print(teste)
