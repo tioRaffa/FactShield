@@ -20,6 +20,8 @@ from analysis.services import (
 
 def run_full_analysis_synchronous(url):
     start_time = time.time()
+
+    # Extração de conteúdo
     try:
         firecrawl_data = extract_content_firecrawl(url=url)
         title = firecrawl_data.get("title", "")
@@ -27,11 +29,13 @@ def run_full_analysis_synchronous(url):
     except Exception as e:
         raise APIException(f"Falha na extração de conteudo 'firecrawl': {e}")
 
+    # Scan da URL
     try:
         url_id = _scan_url(url=url)
     except Exception as e:
         raise APIException(f"Falha no scan da URL: {e} ")
 
+    # Execução paralela das análises
     with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
         # A - Virus Total
         future_vt = executor.submit(get_report, url_id)
@@ -48,6 +52,7 @@ def run_full_analysis_synchronous(url):
 
     end_time = time.time()
 
+    # Determinação do veredicto final
     if fact_check_result:
         final_verdict_source = "HUMANO (Fact-Check)"
         final_veredict = fact_check_result.get("veredict", "N/A")
@@ -69,5 +74,5 @@ def run_full_analysis_synchronous(url):
 if __name__ == "__main__":
     url = "https://g1.globo.com/pr/parana/concursos-e-emprego/noticia/2025/10/01/concurso-adapar-concurso-parana.ghtml"
 
-    teste = run_full_analysis_synchronous(url=url)
-    pprint(teste)
+    reusltado = run_full_analysis_synchronous(url=url)
+    pprint(reusltado)
