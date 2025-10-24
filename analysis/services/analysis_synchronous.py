@@ -21,31 +21,33 @@ from analysis.services import (
 def run_full_analysis_synchronous(url):
     start_time = time.time()
 
-    # Extração de conteúdo
-    try:
-        firecrawl_data = extract_content_firecrawl(url=url)
+    # ThreadPoolExecutor
+    with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
+        # TAREFAS 1 e 2
+        future_firecrawl = executor.submit(extract_content_firecrawl, url)
+        future_vt_id = executor.submit(_scan_url, url)
+
+        # Espera a Extração e o ID do VirusTotal
+        try:
+            firecrawl_data = future_firecrawl.result(timeout=30)
+            url_id = future_vt_id.result(timeout=30)
+        except Exception as e:
+            raise APIException(f"Falha na obtenção de dados iniciais: {e}")
+
+        # TAREFAS 3, 4 e 5
         title = firecrawl_data.get("title", "")
         content = firecrawl_data.get("content", "")
-    except Exception as e:
-        raise APIException(f"Falha na extração de conteudo 'firecrawl': {e}")
 
-    # Scan da URL
-    try:
-        url_id = _scan_url(url=url)
-    except Exception as e:
-        raise APIException(f"Falha no scan da URL: {e} ")
-
-    # Execução paralela das análises
-    with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
-        # A - Virus Total
+        # 3 - Virus Total
         future_vt = executor.submit(get_report, url_id)
 
-        # B - Google Fact Check
+        # 4 - Google Fact Check
         future_fact_check = executor.submit(search_fact_check, title)
 
-        # C - LLM Gemini
+        # 5 - LLM Gemini
         future_llm = executor.submit(analyze_with_llm, content)
 
+        # SINCRONIZAÇÃO FINAL
         vt_result = future_vt.result(timeout=60)
         fact_check_result = future_fact_check.result(timeout=20)
         llm_result = future_llm.result(timeout=120)
