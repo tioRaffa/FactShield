@@ -1,3 +1,5 @@
+import os
+import sys
 import time
 from pprint import pprint
 
@@ -5,7 +7,12 @@ import requests
 from decouple import config
 from rest_framework.exceptions import APIException, ValidationError
 
-from analysis.services.virus_total.scan_url import _scan_url
+project_root = os.path.abspath(
+    os.path.join(os.path.dirname(__file__), "..", "..", "..")
+)
+sys.path.insert(0, project_root)
+
+from analysis.services.virus_total.scan_url import _scan_url  # noqa: E402
 
 
 def get_report(analysis_id):
@@ -58,7 +65,7 @@ def get_report(analysis_id):
 
 
 if __name__ == "__main__":
-    url_to_scan = "https://youglish.com/"
+    url_to_scan = "https://srtslug.biz/8kwRN"
     print(f"Submetendo URL: {url_to_scan}")
 
     url_id = _scan_url(url_to_scan)
