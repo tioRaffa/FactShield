@@ -1,91 +1,56 @@
 # 🛡️ FactShield: Sentinel — O Escudo Contra a Desinformação
 
-![Status](https://img.shields.io/badge/Status-Em%20Desenvolvimento%20Inicial-orange)
-
 ## 💡 Visão Geral do Projeto
 
-**FactShield: Sentinel** é uma API de backend projetada para combater a desinformação digital e as ameaças online através de uma análise em camadas de links e conteúdos textuais. Em um cenário digital onde a propagação de "fake news" e links maliciosos é constante, o FactShield visa fornecer um veredito de credibilidade e segurança, utilizando o poder de APIs especializadas e Inteligência Artificial.
+**FactShield: Sentinel** é uma API de *backend* projetada para combater a desinformação digital e as ameaças online através de uma **análise em pipeline otimizada**. O projeto implementa um sistema de defesa em multicamadas que combina segurança cibernética e análise semântica avançada para fornecer um veredito de credibilidade e risco de segurança para qualquer URL.
 
-O projeto está em suas **fases iniciais de desenvolvimento**, focado na modelagem do banco de dados, configuração do ambiente Docker e integração inicial com serviços externos para estabelecer uma base sólida para as funcionalidades futuras.
+O projeto está na fase de **MVP Funcional**, com todas as camadas de análise integradas e o desafio de *backend* de **latência zero** em andamento (transição para Celery/Redis).
 
-## 🤔 Por que FactShield?
+-----
 
-A desinformação digital representa uma ameaça crescente à sociedade, erodindo a confiança e influenciando decisões importantes. Identificar e mitigar a propagação de conteúdos falsos ou enganosos é um desafio complexo. O FactShield nasce da necessidade de uma ferramenta automatizada e inteligente que possa auxiliar desenvolvedores e plataformas a protegerem seus usuários, oferecendo um mecanismo confiável para validar a autenticidade e a segurança das informações compartilhadas.
+## 🚀 O Grande Diferencial: Arquitetura de Alto Desempenho
+
+O principal desafio de *backend* era orquestrar quatro APIs lentas e variadas de forma eficiente.
+
+### 1\. Concorrência Síncrona (Otimização Comprovada)
+
+  * **Técnica:** Utilização de **`concurrent.futures.ThreadPoolExecutor`** para rodar chamadas de APIs externas (VirusTotal, Google Fact Check, LLM) em paralelo.
+  * **Resultado Quantitativo:** A aplicação desta técnica reduziu drasticamente o tempo de processamento *worst-case* da API:
+    $$\text{Latência Média Reduzida de} \mathbf{17.86s} \text{ para } \mathbf{13.55s} \text{ (Tempo do Processo Mais Lento)}$$
+  * **Conclusão:** O sistema já executa toda a análise no tempo mínimo possível, provando a eficiência do design.
+
+### 2\. Próximo Passo: Latência Zero para o Usuário (Assincronia)
+
+  * **Fase Atual:** Preparação para migrar o processo de $\mathbf{13.55s}$ para o *background*.
+  * **Tecnologias:** Implementação do **Celery** (como *Task Queue*) e **Redis** (como *Broker* e *Cache*) para garantir que a `APIView` retorne em menos de $150ms$, enquanto a análise ocorre em segundo plano.
+
+-----
+
+## 🔍 Módulos e Pipeline de Análise em Camadas
+
+O sistema de verificação em quatro camadas está totalmente integrado, funcionando em hierarquia de veredito (priorizando a fonte humana).
+
+| Camada | Serviço/Tecnologia | Propósito e Veredito |
+| :--- | :--- | :--- |
+| **0. Extração de Dados** | **Firecrawl API** | Extração robusta do `title` e do `content` principal da URL (resolvendo o problema de *scraping* em sites complexos). |
+| **1. Segurança Cibernética** | **VirusTotal API** | Checagem de *blacklists* e malware na URL. Rodando **em paralelo** com as análises de conteúdo. |
+| **2. Checagem Humana** | **Google Fact Check Tools API** | Primeira linha de defesa. Busca vereditos de agências humanas (ex: Estadão Verifica). O veredito é **prioritário** no relatório final. |
+| **3. Inteligência Artificial** | **Google GenAI SDK (Gemini)** | Última linha de defesa. Usa *Prompt Engineering* para analisar o conteúdo completo, gerar um resumo, avaliar o **risco contextual** e fornecer uma recomendação (ex: **"PROSSIGA COM CAUTELA"**). |
+
+-----
 
 ## 🏗️ Arquitetura e Tecnologia
 
-Este projeto foi construído para ser moderno, escalável e de alto desempenho, utilizando as seguintes ferramentas:
-
-| Componente | Tecnologia | Propósito |
+| Componente | Tecnologia | Uso no Projeto |
 | :--- | :--- | :--- |
-| **Linguagem Principal** | **Python 3.x** | Base de todo o desenvolvimento backend. |
-| **Framework API** | **Django REST Framework (DRF)** | Construção de endpoints robustos, seguros e com foco em performance. |
-| **Containerização** | **Docker / Docker Compose** | Isolamento completo do ambiente de desenvolvimento, facilitando o setup em diferentes máquinas e o futuro deploy. |
-| **Cache e Controle** | **Redis** | Utilizado como camada de caching para respostas rápidas e para implementar o controle de taxa de requisições (*Rate Limiting*), garantindo a estabilidade e disponibilidade da API. |
-| **Utilitários** | `python-decouple`, `django-extensions` | Gerenciamento seguro de variáveis de ambiente e ferramentas que aumentam a produtividade no desenvolvimento (ex: `runserver_plus`). |
-
-## 🔍 Módulos e Fluxo de Análise (O Core da API)
-
-O coração do FactShield é o seu sistema de verificação em três camadas. Uma requisição de análise de URL passará sequencialmente pelo seguinte fluxo, garantindo uma validação completa:
-
-### Camada 1: Segurança (Vírus e Malware)
-
-| Serviço | Propósito | Status |
-| :--- | :--- | :--- |
-| **VirusTotal API** | É a primeira e crucial verificação de segurança. O link fornecido é submetido à API do VirusTotal para identificar rapidamente qualquer associação com malware, phishing, scam ou outros riscos conhecidos de segurança. | **Integração em Andamento.** |
-
-### Camada 2: Credibilidade (Conteúdo e Contexto)
-
-| Serviço | Propósito | Status |
-| :--- | :--- | :--- |
-| **API de Conteúdo (A Definir)** | Após a validação de segurança, esta camada extrai o conteúdo principal da página da URL. O texto e metadados são então enviados para um serviço de terceiros (ainda a ser selecionado) que fará uma análise inicial da credibilidade da fonte, data de publicação e outros fatores contextuais. | **Integração Planejada.** |
-
-### Camada 3: Inteligência Artificial (Veredito Final e Recomendações)
-
-| Serviço | Propósito | Status |
-| :--- | :--- | :--- |
-| **API de IA (A Definir)** | Caso as camadas anteriores não consigam fornecer um veredito claro ou completo, o conteúdo é encaminhado para um modelo de Inteligência Artificial (Large Language Model - LLM). A IA realiza uma análise semântica profunda do texto, buscando padrões de desinformação, e fornece uma decisão final sobre a veracidade do conteúdo, acompanhada de **recomendações** e um resumo para o usuário. | **Integração Planejada.** |
-
-## 🛠️ Configuração e Execução Local (Docker)
-
-Para colocar o projeto no ar em seu ambiente de desenvolvimento, você deve usar o `docker-compose` para iniciar todos os serviços necessários (web e redis).
-
-### Pré-requisitos
-
-* Docker e Docker Compose devidamente instalados em sua máquina.
-* Chaves de API (para VirusTotal e futuros serviços) configuradas em um arquivo `.env` na raiz do projeto. (Um `.env.example` será fornecido).
-
-### Comandos de Inicialização
-
-1.  **Clone o repositório:**
-
-    ```bash
-    git clone https://github.com/tioRaffa/FactShield.git
-    cd factshield
-    ```
-
-2.  **Crie o arquivo de variáveis de ambiente:**
-    ```bash
-    cp .env.example .env
-    # Edite o arquivo .env com suas chaves de API e configurações
-    ```
-
-3.  **Inicie o ambiente (Build e Run):**
-    O Docker fará o build da imagem do Python, iniciará o serviço do Redis e, através do script de inicialização (`commands.sh`), aguardará a prontidão do Redis para então executar as migrações do Django.
-
-    ```bash
-    docker-compose up --build
-    ```
-
-### Acesso à API
-
-Após a inicialização bem-sucedida, o serviço principal da API estará acessível em: `http://localhost:8000`
+| **Orquestração** | **Celery & Redis** | Migrando o pipeline completo para execução assíncrona. **Redis** também será usado para *caching* de resultados (latência zero). |
+| **Concorrência** | **`ThreadPoolExecutor`** | Paralelismo de chamadas I/O-bound (chaves para a redução de $\mathbf{17.86s}$ para $\mathbf{13.55s}$). |
+| **Linguagem/Framework** | **Python 3.x, Django REST** | Base robusta para o desenvolvimento *backend* da API. |
+| **Segurança/API Keys** | **`python-decouple`** | Gerenciamento seguro de todas as chaves de API externas (VT, Firecrawl, Gemini, Google Fact Check). |
+| **Containerização** | **Docker / Docker Compose** | Isolamento do ambiente de desenvolvimento (API, Redis e Worker Celery). |
 
 ## 🚀 Próximos Passos (Roadmap)
 
-Os próximos marcos importantes no desenvolvimento do FactShield incluem:
-
-* Implementar a lógica de *Rate Limiting* e caching avançado com Redis para todos os endpoints relevantes.
-* Finalizar e refinar a integração com a API do VirusTotal.
-* Pesquisar, selecionar e desenvolver a camada de abstração para integração com as APIs de Conteúdo e Inteligência Artificial.
-* Criação de testes unitários e de integração para todas as funcionalidades implementadas.
+1.  **Implementar Celery Task:** Finalizar a transformação da função `run_full_analysis_synchronous` em um `@shared_task`.
+2.  **APIView Assíncrona:** Criar a View que gerencia o *caching* com Redis e dispara a Task, retornando o `HTTP 202 Accepted` com o Job ID.
+3.  **Configurar WebSockets (Melhoria Futura):** Implementar *WebSockets* (ex: Django Channels) para notificar o *frontend* instantaneamente quando a análise de $\mathbf{13.55s}$ for concluída.
