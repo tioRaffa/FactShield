@@ -10,8 +10,10 @@ sys.path.append(
     os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 )
 from analysis.services import (
+    _scan_url,
     analyze_with_llm,
     extract_content_firecrawl,
+    get_report,
     search_fact_check,
 )
 
@@ -22,13 +24,17 @@ def run_full_analysis_synchronous(url):
         firecrawl_data = extract_content_firecrawl(url=url)
         title = firecrawl_data.get("title", "")
         content = firecrawl_data.get("content", "")
-
     except Exception as e:
         raise APIException(f"Falha na extração de conteudo 'firecrawl': {e}")
 
+    try:
+        url_id = _scan_url(url=url)
+    except Exception as e:
+        raise APIException(f"Falha no scan da URL: {e} ")
+
     with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
         # A - Virus Total
-        # future_vt = executor.submit()
+        future_vt = executor.submit(get_report, url_id)
 
         # B - Google Fact Check
         future_fact_check = executor.submit(search_fact_check, title)
@@ -36,7 +42,7 @@ def run_full_analysis_synchronous(url):
         # C - LLM Gemini
         future_llm = executor.submit(analyze_with_llm, content)
 
-        # vt_result = future_vt.result(timeout=60)
+        vt_result = future_vt.result(timeout=60)
         fact_check_result = future_fact_check.result(timeout=20)
         llm_result = future_llm.result(timeout=120)
 
@@ -54,7 +60,7 @@ def run_full_analysis_synchronous(url):
         "url": url,
         "final_verdict_source": final_verdict_source,
         "final_veredict": final_veredict,
-        # "virustotal_report": vt_result,
+        "virustotal_report": vt_result,
         "fact_check_report": fact_check_result,
         "llm_analysis": llm_result,
         "firecrawl_data": firecrawl_data,

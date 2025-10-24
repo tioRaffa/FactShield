@@ -65,7 +65,7 @@ def get_report(analysis_id):
 
 
 if __name__ == "__main__":
-    url_to_scan = "https://srtslug.biz/8kwRN"
+    url_to_scan = "https://g1.globo.com/pr/parana/concursos-e-emprego/noticia/2025/10/01/concurso-adapar-concurso-parana.ghtml"
     print(f"Submetendo URL: {url_to_scan}")
 
     url_id = _scan_url(url_to_scan)
