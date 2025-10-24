@@ -57,7 +57,6 @@ def run_full_analysis_synchronous(url):
 
     return {
         "analysis_time_seconds": round(end_time - start_time, 2),
-        "url": url,
         "final_verdict_source": final_verdict_source,
         "final_veredict": final_veredict,
         "virustotal_report": vt_result,

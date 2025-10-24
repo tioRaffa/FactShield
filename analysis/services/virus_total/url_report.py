@@ -50,7 +50,6 @@ def get_report(analysis_id):
         status = attributes.get("status", "N/A")
 
         report = {
-            "url_scanned": url_scanned,
             "malicious_count": malicious_count,
             "suspicious_count": suspicious_count,
             "total_scans": total_scans,
