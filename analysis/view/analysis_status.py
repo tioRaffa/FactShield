@@ -1,10 +1,13 @@
 from celery.result import AsyncResult
 from rest_framework import status
 from rest_framework.response import Response
+from rest_framework.throttling import AnonRateThrottle
 from rest_framework.views import APIView
 
 
 class AnalysisStatusView(APIView):
+    throttle_classes = [AnonRateThrottle]
+
     def get(self, request, task_id):
         task = AsyncResult(task_id)
 
