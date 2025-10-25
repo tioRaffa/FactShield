@@ -4,12 +4,15 @@ import validators
 from django.core.cache import cache
 from rest_framework import status
 from rest_framework.response import Response
+from rest_framework.throttling import AnonRateThrottle
 from rest_framework.views import APIView
 
 from analysis.tasks import run_full_analysis_task
 
 
 class AnalysisTriggerView(APIView):
+    throttle_classes = [AnonRateThrottle]
+
     def post(self, request):
         url = request.data.get("url")
         if not url:
