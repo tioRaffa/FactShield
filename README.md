@@ -1,7 +1,7 @@
 # 🛡️ FactShield: Sentinel — O Escudo Contra a Desinformação
 <div>
-  <img src="https://img.shields.io/badge/Python-3.11+-blue?style=for-the-badge&logo=python&logoColor=white" alt="Python">
-  <img src="https://img.shields.io/badge/Django-5.0-green?style=for-the-badge&logo=django&logoColor=white" alt="Django">
+  <img src="https://img.shields.io/badge/Python-3.12+-blue?style=for-the-badge&logo=python&logoColor=white" alt="Python">
+  <img src="https://img.shields.io/badge/Django-5.2-green?style=for-the-badge&logo=django&logoColor=white" alt="Django">
   <img src="https://img.shields.io/badge/Pytest-Testing-blueviolet?style=for-the-badge&logo=pytest&logoColor=white" alt="Pytest">
   <img src="https://img.shields.io/badge/Docker-Ready-blue?style=for-the-badge&logo=docker&logoColor=white" alt="Docker Ready">
   <img src="https://img.shields.io/badge/Queue-Celery-darkgreen?style=for-the-badge&logo=celery&logoColor=white" alt="Celery">
