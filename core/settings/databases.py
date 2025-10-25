@@ -2,6 +2,8 @@ from decouple import config
 
 from .assets import BASE_DIR
 
+CACHE_TTL = config("CACHE_TTL", 300, cast=int)
+
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
@@ -9,9 +11,9 @@ CACHES = {
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         },
+        "TIMEOUT": CACHE_TTL,
     }
 }
-CACHE_TTL = config("CACHE_TTL", 300, cast=int)
 
 
 DATABASES = {

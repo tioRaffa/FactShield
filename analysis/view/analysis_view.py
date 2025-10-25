@@ -1,4 +1,7 @@
+from hashlib import sha256
+
 import validators
+from django.core.cache import cache
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -16,6 +19,18 @@ class AnalysisTriggerView(APIView):
         if not validators.url(url):
             return Response(
                 {"error": "Campo URL é obrigatorio"}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        cache_key = sha256(url.enconde()).hexdigest()
+        cached_result = cache.get(cache_key)
+        if cached_result:
+            return Response(
+                {
+                    "message": "Resultado retornado do Cache",
+                    "analysis_time_second": 0,
+                    "final_report": cached_result,
+                },
+                status=status.HTTP_200_OK,
             )
 
         try:
