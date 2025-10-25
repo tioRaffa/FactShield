@@ -16,11 +16,11 @@ class AnalysisStatusView(APIView):
         state = task.state
         response_data = {"state": state}
 
-        if state == "PENDING":
-            response_data["status"] = "Aguardando na Fila..."
-
-        elif state == "STARTED":
+        if state == "STARTED":
             response_data["status"] = "Em processamento..."
+
+        elif state == "PENDING":
+            response_data["status"] = "Aguardando na Fila..."
 
         elif state == "FAILURE":
             response_data["status"] = "Falha na execução..."
