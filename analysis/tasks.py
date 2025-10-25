@@ -4,6 +4,7 @@ import sys
 import time
 
 from celery import shared_task
+from django.core.cache import cache
 from rest_framework.exceptions import APIException
 
 from analysis.services import (
@@ -14,9 +15,11 @@ from analysis.services import (
     search_fact_check,
 )
 
+CACHE_5MIN_TTL = 300
+
 
 @shared_task()
-def run_full_analysis_task(url):
+def run_full_analysis_task(url, cache_key):
     start_time = time.time()
 
     # ThreadPoolExecutor
@@ -60,7 +63,7 @@ def run_full_analysis_task(url):
         final_verdict_source = "INTELIGÊNCIA ARTIFICIAL (LLM)"
         final_veredict = llm_result.get("llm_recommendation", "INCONCLUSIVO")
 
-    return {
+    final_report = {
         "analysis_time_seconds": round(end_time - start_time, 2),
         "final_verdict_source": final_verdict_source,
         "final_veredict": final_veredict,
@@ -69,3 +72,6 @@ def run_full_analysis_task(url):
         "llm_analysis": llm_result,
         "firecrawl_data": firecrawl_data,
     }
+    cache.set(cache_key, final_report, timeout=CACHE_5MIN_TTL)
+
+    return final_report
