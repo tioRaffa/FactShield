@@ -15,8 +15,8 @@ from analysis.services import (
 )
 
 
-@shared_task
-def run_full_analysis_synchronous(url):
+@shared_task()
+def run_full_analysis_task(url):
     start_time = time.time()
 
     # ThreadPoolExecutor
