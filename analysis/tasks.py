@@ -46,8 +46,8 @@ def run_full_analysis_task(url):
         future_llm = executor.submit(analyze_with_llm, content)
 
         # SINCRONIZAÇÃO FINAL
-        vt_result = future_vt.result(timeout=60)
-        fact_check_result = future_fact_check.result(timeout=20)
+        vt_result = future_vt.result(timeout=120)
+        fact_check_result = future_fact_check.result(timeout=60)
         llm_result = future_llm.result(timeout=120)
 
     end_time = time.time()

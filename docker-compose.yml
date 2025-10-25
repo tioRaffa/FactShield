@@ -21,7 +21,8 @@ services:
   celery_worker:
     container_name: factshield_celery_worker
     build: .
-    command: celery -A core worker -l info
+    entrypoint: python
+    command: ["-m", "celery", "-A", "core", "worker", "-l", "info"]
     volumes:
       - .:/app
     env_file:
