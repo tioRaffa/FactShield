@@ -21,7 +21,7 @@ class AnalysisTriggerView(APIView):
                 {"error": "Campo URL é obrigatorio"}, status=status.HTTP_400_BAD_REQUEST
             )
 
-        cache_key = sha256(url.enconde()).hexdigest()
+        cache_key = sha256(url.encode()).hexdigest()
         cached_result = cache.get(cache_key)
         if cached_result:
             return Response(
@@ -34,7 +34,7 @@ class AnalysisTriggerView(APIView):
             )
 
         try:
-            task_result = run_full_analysis_task.delay(url)
+            task_result = run_full_analysis_task.delay(url, cache_key)
             print(f"Task {task_result.id} iniciada para a URL: {url}")
 
         except Exception as e:
